@@ -1,35 +1,52 @@
-version: '3'
+version: '3.9'
 
 services:
+  # Service Strapi
   strapi:
-    build: .
-    container_name: strapi_app
+    image: node:20-alpine
+    container_name: strapi
+    working_dir: /app
+    volumes:
+      - ./portal-strapi:/app
+      - /app/node_modules
     ports:
       - "1337:1337"
     environment:
-      DATABASE_CLIENT: postgres
-      DATABASE_HOST: db
-      DATABASE_PORT: 5432
-      DATABASE_NAME: strapi
-      DATABASE_USERNAME: strapi
-      DATABASE_PASSWORD: strapi_password
-    depends_on:
-      - db
+      # Server
+      HOST: 0.0.0.0
+      PORT: 1337
+
+      # Secrets
+      APP_KEYS: qj+f6dVUvkegqm1bUznTIg==,9OvykFUl7aF+W4eviMcVDQ==,6R3x3PRa9XVYQdf802ZLSA==,GrLqLfGEQx5zBjfMh0Y+DQ==
+      API_TOKEN_SALT: QHPRLZan7z3tOTlKYYCCUA==
+      ADMIN_JWT_SECRET: snmj/D8vPwWZDCEFQc95bg==
+      TRANSFER_TOKEN_SALT: /EOb1n6WTWdY8iGwy3zCoA==
+      ENCRYPTION_KEY: MzAAW2KdmfMkn2zrdO3Wew==
+
+      # Database
+      DATABASE_CLIENT: mysql
+      DATABASE_HOST: 213.32.120.11
+      DATABASE_PORT: 3306
+      DATABASE_NAME: aden_cms_db
+      DATABASE_USERNAME: root
+      DATABASE_PASSWORD: Sertoi1029
+      DATABASE_SSL: "false"
+
+    command: sh -c "npm install && npm run build && npm run start"
+
+  # Service aden.bff
+  bff:
+    image: node:20-alpine
+    container_name: aden_bff
+    working_dir: /app
     volumes:
-      - ./app:/app
+      - ./aden-bff:/app
       - /app/node_modules
-
-  db:
-    image: postgres:15
-    container_name: strapi_db
-    environment:
-      POSTGRES_DB: strapi
-      POSTGRES_USER: strapi
-      POSTGRES_PASSWORD: strapi_password
-    volumes:
-      - pgdata:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
-
-volumes:
-  pgdata:
+      - "4000:4000"
+    environment:
+      STRAPI_URL: http://strapi:1337
+      JWT_SECRET: QgRyVbD+2UNHF/nxURVzwA==
+    command: sh -c "npm install && npm run start"
+    depends_on:
+      - strapi
